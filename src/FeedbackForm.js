@@ -1,16 +1,17 @@
+// Import necessary libraries
 import React, { useState } from 'react';
-import { db } from './firebaseConfig'; // Import Firebase configuration
+import { db } from './firebaseConfig'; // Make sure the path is correct
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 
 const FeedbackForm = ({ busStopId }) => {
   // State variables to store form inputs
   const [feedback, setFeedback] = useState('');
   const [rating, setRating] = useState(5);
-  const [isSubmitting, setIsSubmitting] = useState(false); // To track submission status
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Function to handle form submission
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent default form submission behavior
+    e.preventDefault();
 
     // Basic form validation
     if (!feedback.trim()) {
@@ -22,7 +23,7 @@ const FeedbackForm = ({ busStopId }) => {
       return;
     }
 
-    setIsSubmitting(true); // Set submitting state to true
+    setIsSubmitting(true);
 
     try {
       // Add feedback to Firestore
@@ -32,7 +33,6 @@ const FeedbackForm = ({ busStopId }) => {
         rating,
         timestamp: Timestamp.now(),
       });
-      // Reset form fields after successful submission
       setFeedback('');
       setRating(5);
       alert('Feedback submitted successfully!');
@@ -40,13 +40,13 @@ const FeedbackForm = ({ busStopId }) => {
       console.error('Error submitting feedback:', error);
       alert('Failed to submit feedback. Please try again later.');
     } finally {
-      setIsSubmitting(false); // Reset submitting state
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div style={{ marginBottom: '20px' }}>
-      <h3>Submit Feedback for Bus Stop {busStopId}</h3>
+    <div style={{ marginTop: '10px' }}>
+      <h4>Submit Feedback for Stop ID: {busStopId}</h4>
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: '10px' }}>
           <label>
@@ -55,7 +55,7 @@ const FeedbackForm = ({ busStopId }) => {
               value={rating}
               onChange={(e) => setRating(Number(e.target.value))}
               style={{ marginLeft: '10px' }}
-              disabled={isSubmitting} // Disable while submitting
+              disabled={isSubmitting}
             >
               {[1, 2, 3, 4, 5].map((num) => (
                 <option key={num} value={num}>
@@ -73,8 +73,8 @@ const FeedbackForm = ({ busStopId }) => {
               onChange={(e) => setFeedback(e.target.value)}
               placeholder="Enter your feedback here"
               rows="4"
-              cols="50"
-              disabled={isSubmitting} // Disable while submitting
+              cols="40"
+              disabled={isSubmitting}
               style={{
                 display: 'block',
                 marginTop: '10px',
@@ -88,7 +88,7 @@ const FeedbackForm = ({ busStopId }) => {
         </div>
         <button
           type="submit"
-          disabled={isSubmitting} // Disable submit button while submitting
+          disabled={isSubmitting}
           style={{
             padding: '10px 20px',
             backgroundColor: isSubmitting ? '#ccc' : '#007bff',
