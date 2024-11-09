@@ -74,7 +74,6 @@ const MapComponent = () => {
             wheelchairAccessible: wheelchair_boarding === '1' ? 'Yes' : 'No'
           };
         }).filter(stop => stop !== null); // Filter out any invalid stops
-
         setBusStops(stops);
       } catch (error) {
         console.error('Error loading GTFS stops data:', error);
@@ -90,7 +89,7 @@ const MapComponent = () => {
       try {
         const response = await fetch('https://nextride.brampton.ca:81/API/VehiclePositions?format=json');
         const data = await response.json();
-
+        console.log(data)
         if (data.entity && data.entity.length > 0) {
           setBusData(data.entity); // Only set busData if there are active positions
         } else {
