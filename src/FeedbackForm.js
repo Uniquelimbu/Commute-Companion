@@ -1,32 +1,32 @@
-// Import necessary libraries
+// FeedbackForm.js
 import React, { useState } from 'react';
-import { db } from './firebaseConfig'; // Make sure the path is correct
+import { db } from './firebaseConfig'; // Adjust path as necessary
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faStar } from '@fortawesome/free-solid-svg-icons';
 
-const FeedbackForm = ({ busStopId }) => {
-  // State variables to store form inputs
+const FeedbackForm = ({ busStopId, onClose }) => {
   const [feedback, setFeedback] = useState('');
-  const [rating, setRating] = useState(5);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [rating, setRating] = useState(0); // Rating from 0 to 5 stars
+  const [hoverRating, setHoverRating] = useState(0); // Rating for star hover effect
+  const [isSubmitting, setIsSubmitting] = useState(false); // To track submission status
 
-  // Function to handle form submission
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Basic form validation
     if (!feedback.trim()) {
       alert('Please enter your feedback.');
       return;
     }
     if (rating < 1 || rating > 5) {
-      alert('Please select a rating between 1 and 5.');
+      alert('Please select a rating.');
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // Add feedback to Firestore
       await addDoc(collection(db, 'feedbacks'), {
         busStopId,
         feedback: feedback.trim(),
@@ -34,8 +34,9 @@ const FeedbackForm = ({ busStopId }) => {
         timestamp: Timestamp.now(),
       });
       setFeedback('');
-      setRating(5);
+      setRating(0);
       alert('Feedback submitted successfully!');
+      onClose();
     } catch (error) {
       console.error('Error submitting feedback:', error);
       alert('Failed to submit feedback. Please try again later.');
@@ -44,26 +45,34 @@ const FeedbackForm = ({ busStopId }) => {
     }
   };
 
+  // Render stars with click and hover effects
+  const renderStars = () => {
+    return Array.from({ length: 5 }, (_, index) => (
+      <FontAwesomeIcon
+        key={index}
+        icon={faStar}
+        onClick={() => setRating(index + 1)}
+        onMouseEnter={() => setHoverRating(index + 1)}
+        onMouseLeave={() => setHoverRating(0)}
+        style={{
+          cursor: 'pointer',
+          color: index < (hoverRating || rating) ? '#FFD700' : '#ccc',
+          fontSize: '1.8em', // Slightly increased size for visibility
+          transition: 'color 0.2s', // Smooth transition for hover
+        }}
+      />
+    ));
+  };
+
   return (
-    <div style={{ marginTop: '10px' }}>
-      <h4>Submit Feedback for Stop ID: {busStopId}</h4>
+    <div style={{ marginBottom: '20px', maxWidth: '400px' }}>
+      <h3>Submit Feedback for Stop ID: {busStopId}</h3>
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: '10px' }}>
-          <label>
-            Rating:
-            <select
-              value={rating}
-              onChange={(e) => setRating(Number(e.target.value))}
-              style={{ marginLeft: '10px' }}
-              disabled={isSubmitting}
-            >
-              {[1, 2, 3, 4, 5].map((num) => (
-                <option key={num} value={num}>
-                  {num}
-                </option>
-              ))}
-            </select>
-          </label>
+          <label>Rating:</label>
+          <div style={{ display: 'flex', gap: '5px', marginTop: '5px' }}>
+            {renderStars()}
+          </div>
         </div>
         <div style={{ marginBottom: '10px' }}>
           <label>
@@ -73,16 +82,15 @@ const FeedbackForm = ({ busStopId }) => {
               onChange={(e) => setFeedback(e.target.value)}
               placeholder="Enter your feedback here"
               rows="4"
-              cols="40"
-              disabled={isSubmitting}
               style={{
-                display: 'block',
-                marginTop: '10px',
                 width: '100%',
                 padding: '8px',
                 border: '1px solid #ccc',
                 borderRadius: '4px',
+                resize: 'none', // Prevent resizing
+                fontFamily: 'Arial, sans-serif', // Improved font readability
               }}
+              disabled={isSubmitting}
             />
           </label>
         </div>
@@ -96,6 +104,7 @@ const FeedbackForm = ({ busStopId }) => {
             border: 'none',
             borderRadius: '4px',
             cursor: isSubmitting ? 'not-allowed' : 'pointer',
+            transition: 'background-color 0.3s', // Smooth transition for button color
           }}
         >
           {isSubmitting ? 'Submitting...' : 'Submit Feedback'}

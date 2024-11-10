@@ -3,11 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.6.0",
+    "@fortawesome/free-solid-svg-icons": "^6.6.0",
+    "@fortawesome/react-fontawesome": "^0.2.2",
     "commute-companion": "file:",
     "firebase": "^11.0.1",
     "mapbox-gl": "^3.7.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-rating-stars-component": "^2.2.0",
     "react-scripts": "^5.0.1",
     "shebang-regex": "^4.0.0"
   },

@@ -1,9 +1,10 @@
 // Import necessary libraries
 import React, { useEffect, useRef, useState } from 'react';
+import ReactDOM from 'react-dom';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { db } from '../firebaseConfig'; // Adjust path as necessary
 import FeedbackForm from '../FeedbackForm'; // Adjust path as necessary
+import FeedbackList from '../FeedbackList'; // Adjust path as necessary
 
 // Set Mapbox access token from environment variables
 mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
@@ -13,7 +14,6 @@ const MapComponent = () => {
   const map = useRef(null);             // Reference for Mapbox instance
   const [busData, setBusData] = useState([]);      // State for real-time bus data
   const [busStops, setBusStops] = useState(null);  // State for bus stops data in GeoJSON format
-  const [selectedStop, setSelectedStop] = useState(null); // State for selected bus stop to show feedback
   const busMarkersRef = useRef([]);     // Array to store bus markers for cleanup
 
   // Initialize Mapbox map on component mount
@@ -39,14 +39,13 @@ const MapComponent = () => {
         const text = await response.text();
 
         // Parse stops.txt and convert to GeoJSON format
-        const rows = text.split('\n').slice(1).filter(row => row); // Remove header row and empty lines
+        const rows = text.split('\n').slice(1).filter(row => row);
         const features = rows.map(row => {
           const [stop_id, , stop_name, stop_desc, stop_lat, stop_lon, , , , , , wheelchair_boarding] = row.split(',');
 
-          // Parse coordinates and skip invalid entries
           const lat = parseFloat(stop_lat);
           const lon = parseFloat(stop_lon);
-          if (isNaN(lat) || isNaN(lon)) return null;
+          if (isNaN(lat) || isNaN(lon)) return null; // Skip invalid entries
 
           return {
             type: "Feature",
@@ -73,6 +72,16 @@ const MapComponent = () => {
   useEffect(() => {
     if (!map.current || !busStops) return;
 
+    // Remove source and layers if they exist to avoid duplicates
+    if (map.current.getSource("busStops")) {
+      map.current.removeSource("busStops");
+    }
+    ["clusters", "cluster-count", "unclustered-point"].forEach(layer => {
+      if (map.current.getLayer(layer)) {
+        map.current.removeLayer(layer);
+      }
+    });
+
     // Add clustered GeoJSON source for bus stops
     map.current.addSource("busStops", {
       type: "geojson",
@@ -82,7 +91,7 @@ const MapComponent = () => {
       clusterRadius: 50
     });
 
-    // Add cluster and individual point layers
+    // Add cluster and individual point layers for visualization
     map.current.addLayer({
       id: "clusters",
       type: "circle",
@@ -90,11 +99,7 @@ const MapComponent = () => {
       filter: ["has", "point_count"],
       paint: {
         "circle-color": "#51bbd6",
-        "circle-radius": [
-          "step",
-          ["get", "point_count"],
-          20, 100, 30, 750, 40
-        ],
+        "circle-radius": ["step", ["get", "point_count"], 20, 100, 30, 750, 40],
       },
     });
 
@@ -122,33 +127,30 @@ const MapComponent = () => {
       },
     });
 
-    // Display popup on click of an unclustered point
+    // Display popup with feedback form and feedback list on click of an unclustered point
     map.current.on("click", "unclustered-point", (e) => {
       const coordinates = e.features[0].geometry.coordinates.slice();
       const { id, name, description, wheelchairAccessible } = e.features[0].properties;
 
-      // Set selected stop for feedback display
-      setSelectedStop({ id, name });
+      // Create a container for rendering React components into the popup
+      const popupContent = document.createElement("div");
 
       new mapboxgl.Popup()
         .setLngLat(coordinates)
-        .setHTML(`
-          <h3>${name}</h3>
-          <p>Description: ${description}</p>
-          <p>Wheelchair Accessible: ${wheelchairAccessible}</p>
-          <button id="feedbackButton">Give Feedback</button>
-        `)
+        .setDOMContent(popupContent)
         .addTo(map.current);
 
-      // Add a listener for the feedback button inside the popup
-      setTimeout(() => {
-        const feedbackButton = document.getElementById("feedbackButton");
-        if (feedbackButton) {
-          feedbackButton.onclick = () => {
-            setSelectedStop({ id, name });
-          };
-        }
-      }, 0);
+      // Render FeedbackForm and FeedbackList into the popup using ReactDOM
+      ReactDOM.render(
+        <>
+          <h3>{name}</h3>
+          <p>Description: {description}</p>
+          <p>Wheelchair Accessible: {wheelchairAccessible}</p>
+          <FeedbackForm busStopId={id} style={{ resize: 'none', width: '100%' }} />
+          <FeedbackList busStopId={id} />
+        </>,
+        popupContent
+      );
     });
 
     // Zoom into clusters on click
@@ -209,16 +211,9 @@ const MapComponent = () => {
     return () => busMarkersRef.current.forEach(marker => marker.remove());
   }, [busData]);
 
+  
   return (
-    <div>
-      <h2>Commute Companion - Transit Map</h2>
-      <div ref={mapContainer} style={{ width: '100%', height: '500px', border: '1px solid #ccc' }} />
-      {selectedStop && (
-        <div style={{ marginTop: '20px' }}>
-          <FeedbackForm busStopId={selectedStop.id} />
-        </div>
-      )}
-    </div>
+    <div ref={mapContainer} className="map-container" />
   );
 };
 
