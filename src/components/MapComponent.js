@@ -20,6 +20,7 @@ const MapComponent = () => {
   useEffect(() => {
     if (map.current) return; // Ensure map is initialized only once
 
+    // Create a new Mapbox map
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/streets-v11',
@@ -72,100 +73,93 @@ const MapComponent = () => {
   useEffect(() => {
     if (!map.current || !busStops) return;
 
-    // Remove source and layers if they exist to avoid duplicates
-    if (map.current.getSource("busStops")) {
-      map.current.removeSource("busStops");
-    }
-    ["clusters", "cluster-count", "unclustered-point"].forEach(layer => {
-      if (map.current.getLayer(layer)) {
-        map.current.removeLayer(layer);
-      }
-    });
+    // Check if source already exists to prevent duplication
+    if (!map.current.getSource("busStops")) {
+      // Add clustered GeoJSON source for bus stops
+      map.current.addSource("busStops", {
+        type: "geojson",
+        data: busStops,
+        cluster: true,
+        clusterMaxZoom: 14,
+        clusterRadius: 50
+      });
 
-    // Add clustered GeoJSON source for bus stops
-    map.current.addSource("busStops", {
-      type: "geojson",
-      data: busStops,
-      cluster: true,
-      clusterMaxZoom: 14,
-      clusterRadius: 50
-    });
+      // Add cluster and individual point layers for visualization
+      map.current.addLayer({
+        id: "clusters",
+        type: "circle",
+        source: "busStops",
+        filter: ["has", "point_count"],
+        paint: {
+          "circle-color": "#51bbd6",
+          "circle-radius": ["step", ["get", "point_count"], 20, 100, 30, 750, 40],
+        },
+      });
 
-    // Add cluster and individual point layers for visualization
-    map.current.addLayer({
-      id: "clusters",
-      type: "circle",
-      source: "busStops",
-      filter: ["has", "point_count"],
-      paint: {
-        "circle-color": "#51bbd6",
-        "circle-radius": ["step", ["get", "point_count"], 20, 100, 30, 750, 40],
-      },
-    });
+      map.current.addLayer({
+        id: "cluster-count",
+        type: "symbol",
+        source: "busStops",
+        filter: ["has", "point_count"],
+        layout: {
+          "text-field": "{point_count_abbreviated}",
+          "text-size": 12,
+        },
+      });
 
-    map.current.addLayer({
-      id: "cluster-count",
-      type: "symbol",
-      source: "busStops",
-      filter: ["has", "point_count"],
-      layout: {
-        "text-field": "{point_count_abbreviated}",
-        "text-size": 12,
-      },
-    });
+      map.current.addLayer({
+        id: "unclustered-point",
+        type: "circle",
+        source: "busStops",
+        filter: ["!", ["has", "point_count"]],
+        paint: {
+          "circle-color": "#11b4da",
+          "circle-radius": 8,
+          "circle-stroke-width": 1,
+          "circle-stroke-color": "#fff",
+        },
+      });
 
-    map.current.addLayer({
-      id: "unclustered-point",
-      type: "circle",
-      source: "busStops",
-      filter: ["!", ["has", "point_count"]],
-      paint: {
-        "circle-color": "#11b4da",
-        "circle-radius": 8,
-        "circle-stroke-width": 1,
-        "circle-stroke-color": "#fff",
-      },
-    });
+      // Display popup with feedback form and feedback list on click of an unclustered point
+      map.current.on("click", "unclustered-point", (e) => {
+        const coordinates = e.features[0].geometry.coordinates.slice();
+        const { id, name, description, wheelchairAccessible } = e.features[0].properties;
 
-    // Display popup with feedback form and feedback list on click of an unclustered point
-    map.current.on("click", "unclustered-point", (e) => {
-      const coordinates = e.features[0].geometry.coordinates.slice();
-      const { id, name, description, wheelchairAccessible } = e.features[0].properties;
+        // Create a container for rendering React components into the popup
+        const popupContent = document.createElement("div");
 
-      // Create a container for rendering React components into the popup
-      const popupContent = document.createElement("div");
+        new mapboxgl.Popup()
+          .setLngLat(coordinates)
+          .setDOMContent(popupContent)
+          .addTo(map.current);
 
-      new mapboxgl.Popup()
-        .setLngLat(coordinates)
-        .setDOMContent(popupContent)
-        .addTo(map.current);
+        // Render FeedbackForm and FeedbackList into the popup using ReactDOM
+        ReactDOM.render(
+          <>
+            <h3>{name}</h3>
+            <p>Description: {description}</p>
+            <p>Wheelchair Accessible: {wheelchairAccessible}</p>
+            <FeedbackForm busStopId={id} style={{ resize: 'none', width: '100%' }} />
+            <FeedbackList busStopId={id} />
+          </>,
+          popupContent
+        );
+      });
 
-      // Render FeedbackForm and FeedbackList into the popup using ReactDOM
-      ReactDOM.render(
-        <>
-          <h3>{name}</h3>
-          <p>Description: {description}</p>
-          <p>Wheelchair Accessible: {wheelchairAccessible}</p>
-          <FeedbackForm busStopId={id} style={{ resize: 'none', width: '100%' }} />
-          <FeedbackList busStopId={id} />
-        </>,
-        popupContent
-      );
-    });
+      // Zoom into clusters on click
+      map.current.on("click", "clusters", (e) => {
+        const features = map.current.queryRenderedFeatures(e.point, { layers: ["clusters"] });
+        const clusterId = features[0].properties.cluster_id;
 
-    // Zoom into clusters on click
-    map.current.on("click", "clusters", (e) => {
-      const features = map.current.queryRenderedFeatures(e.point, { layers: ["clusters"] });
-      const clusterId = features[0].properties.cluster_id;
-
-      map.current.getSource("busStops").getClusterExpansionZoom(clusterId, (err, zoom) => {
-        if (err) return;
-        map.current.easeTo({
-          center: features[0].geometry.coordinates,
-          zoom,
+        map.current.getSource("busStops").getClusterExpansionZoom(clusterId, (err, zoom) => {
+          if (err) return;
+          map.current.easeTo({
+            center: features[0].geometry.coordinates,
+            zoom,
+          });
         });
       });
-    });
+    }
   }, [busStops]);
 
   // Fetch real-time bus data and refresh every 15 seconds
@@ -211,9 +205,8 @@ const MapComponent = () => {
     return () => busMarkersRef.current.forEach(marker => marker.remove());
   }, [busData]);
 
-  
   return (
-    <div ref={mapContainer} className="map-container" />
+    <div ref={mapContainer} className="map-container" style={{ width: '100%', height: '100vh' }} />
   );
 };
 
