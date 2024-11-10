@@ -81,9 +81,6 @@ const FeedbackForm = ({ busStopId, busStopName, description, wheelchairAccessibl
   return (
     <div style={{ marginBottom: '20px', maxWidth: '400px' }}>
       <h3 style={{ fontSize: '1.4em', fontWeight: 'bold', marginBottom: '10px' }}>{busStopName}</h3>
-      <p style={{ fontSize: '1.1em', marginBottom: '5px' }}>Description: {description || 'No description available'}</p>
-      <p style={{ fontSize: '1.1em', marginBottom: '10px' }}>Wheelchair Accessible: {wheelchairAccessible}</p>
-      <p style={{ fontSize: '1.1em', marginBottom: '10px' }}>Shelter: {shelterAvailability}</p>
 
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: '10px' }}>
