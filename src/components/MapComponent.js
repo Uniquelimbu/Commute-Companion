@@ -5,6 +5,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import FeedbackForm from '../FeedbackForm'; // Adjust path as necessary
 import FeedbackList from '../FeedbackList'; // Adjust path as necessary
+import Papa from 'papaparse'; // For parsing CSV data
 
 // Set Mapbox access token from environment variables
 mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
@@ -14,6 +15,32 @@ const MapComponent = () => {
   const map = useRef(null); // Reference for Mapbox instance
   const [busStops, setBusStops] = useState(null); // State for bus stops data in GeoJSON format
   const [busData, setBusData] = useState([]); // State for real-time bus data
+  const [routePath, setRoutePath] = useState(2);
+
+  // Async functions to load data from text files
+  const loadData = async () => {
+    const routes = await loadTextFile('/gtfs_data/routes.txt');
+    const shapes = await loadTextFile('/gtfs_data/shapes.txt');
+    const trips = await loadTextFile('/gtfs_data/trips.txt');
+
+    return {
+      routes: parseCSVData(routes),
+      shapes: parseCSVData(shapes),
+      trips: parseCSVData(trips)
+    };
+  };
+
+  // Function to load and parse CSV files
+  const loadTextFile = async (filePath) => {
+    const response = await fetch(filePath);
+    const text = await response.text();
+    return text;
+  };
+
+  const parseCSVData = (csvData) => {
+    const parsed = Papa.parse(csvData, { header: true });
+    return parsed.data;
+  };
 
   // Initialize Mapbox map on component mount
   useEffect(() => {
@@ -42,6 +69,10 @@ const MapComponent = () => {
     map.current.on('load', () => {
       geolocate.trigger(); // Requests the user's location
     });
+
+    map.current.on('styledata', () => {
+        loadAndSetRoutePath();
+      });
 
     // Error listener for geolocation issues
     geolocate.on('error', (error) => {
@@ -208,6 +239,59 @@ const MapComponent = () => {
     return () => clearInterval(interval);
   }, []);
 
+   const loadAndSetRoutePath = async () => {
+      // Load data from files and find the route path for the selected route
+      const routeData = await loadData();
+
+      const route = routeData.routes.find((r) => r.route_short_name == routePath);
+      if (!route) return;
+
+      const trip = routeData.trips.find((t) => t.route_id == route.route_id);
+      if (!trip) return;
+      const shapePoints = routeData.shapes
+        .filter((s) => s.shape_id == trip.shape_id)
+        .sort((a, b) => a.shape_pt_sequence - b.shape_pt_sequence)
+        .map((point) => [parseFloat(point.shape_pt_lon), parseFloat(point.shape_pt_lat)]);
+      console.log(shapePoints)
+      setRoutePath({
+        type: 'Feature',
+        geometry: {
+          type: 'LineString',
+          coordinates: shapePoints
+        }
+      });
+    };
+
+  loadAndSetRoutePath();
+
+   useEffect(() => {
+    if (map.current && routePath) {
+      // Ensure any existing source and layer are removed before adding new ones
+      if (map.current.getSource('routePath')) {
+        map.current.removeSource('routePath');
+      }
+      if (map.current.getLayer('routeLayer')) {
+        map.current.removeLayer('routeLayer');
+      }
+
+      // Add the route as a source
+      map.current.addSource('routePath', {
+        type: 'geojson',
+        data: routePath
+      });
+
+      // Add a line layer to represent the route
+      map.current.addLayer({
+        id: 'routeLayer',
+        type: 'line',
+        source: 'routePath',
+        paint: {
+          'line-color': '#FF0000', // Set line color
+          'line-width': 4          // Set line width
+        }
+      });
+    }
+  }, [routePath]);
   return (
     <div ref={mapContainer} className="map-container" style={{ width: '100%', height: '100vh' }} />
   );

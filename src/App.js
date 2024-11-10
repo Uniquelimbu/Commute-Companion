@@ -10,7 +10,7 @@ function App() {
       {/* Logo Image */}
       <img src="./logo.png" alt="Logo" className="logo" />
       <MapComponent />
-      //<VehicleData routeShortName={2}/>
+      {/* <VehicleData routeShortName={36}/> */}
     </div>
   );
 }
