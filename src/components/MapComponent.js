@@ -7,14 +7,29 @@ import FeedbackForm from '../FeedbackForm';
 import FeedbackList from '../FeedbackList';
 import { db } from '../firebaseConfig';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-
+import Papa from 'papaparse'; // For parsing CSV data
+import BusList from './BusList';
 // Set Mapbox access token from environment variables
 mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
 
 const MapComponent = () => {
   const mapContainer = useRef(null); // Reference for map container
   const map = useRef(null); // Reference for Mapbox instance
-  const [busStops, setBusStops] = useState(null); // State for bus stops data in GeoJSON format
+  const [busStops, setBusStops] = useState(); // State for bus stops data in GeoJSON format
+  const [stopTimes, setStopTimes] = useState([]); // State for bus stops data in GeoJSON format
+  const [stopName, setStopName] = useState(); // State for bus stops data in GeoJSON format
+
+
+  const loadTextFile = async (filePath) => {
+    const response = await fetch(filePath);
+    const text = await response.text();
+    return text;
+  };
+
+  const parseCSVData = (csvData) => {
+    const parsed = Papa.parse(csvData, { header: true });
+    return parsed.data;
+  };
 
   // Initialize Mapbox map on component mount
   useEffect(() => {
@@ -148,15 +163,84 @@ const MapComponent = () => {
       },
     });
 
+
+
+  // Function to load and parse CSV files
     // Display basic popup with "Write a Review" button
     map.current.on("click", "unclustered-point", async (e) => {
       const coordinates = e.features[0].geometry.coordinates.slice();
       const { id, name, description, wheelchairAccessible } = e.features[0].properties;
+      setStopName(name);
 
       // Calculate average rating, wheelchair accessibility, and shelter status
       const { averageRating, updatedWheelchairStatus, shelterAvailability } = await calculateBusStopFeedbackData(id);
 
       const initialPopupContent = document.createElement("div");
+      const loadData = async () => {
+        const stopTimes = await loadTextFile('/gtfs_data/stop_times.txt');
+        const parsedStopTimes = parseCSVData(stopTimes);
+
+        // Filter stop times by specific stop_id
+        const filteredData = parsedStopTimes.filter(
+          (stopTime) => stopTime.stop_id == id
+        );
+
+        const currentTime = new Date();
+      currentTime.setMinutes(currentTime.getMinutes() - 1);
+
+      const finalData = filteredData.filter((stopTime) => {
+        // Convert arrival_time to a Date object for comparison
+        const [hours, minutes, seconds] = stopTime.arrival_time.split(':').map(Number);
+        const arrivalTime = new Date();
+        arrivalTime.setHours(hours, minutes, seconds || 0);
+
+        // Check if arrival time is after (current time - 1 minute)
+        return arrivalTime > currentTime;
+      });
+
+       // Step 3: Filter by weekday in trip_id
+       const today = new Date();
+       const daysMap = {
+         0: 'Sunday',
+         1: 'Weekday',
+         2: 'Weekday',
+         3: 'Weekday',
+         4: 'Weekday',
+         5: 'Weekday',
+         6: 'Saturday'
+       };
+       const todayString = daysMap[today.getDay()];
+ 
+       const finalFilteredData = finalData.filter((stopTime) => {
+         const tripID = stopTime.trip_id;
+         const dayInTripID = tripID.match(/Weekday|Saturday|Sunday/);
+ 
+         return dayInTripID && dayInTripID[0] === todayString;
+       });
+
+       // Step 4: Sort by arrival_time
+      const sortedData = finalFilteredData.sort((a, b) => {
+        const [hoursA, minutesA, secondsA] = a.arrival_time.split(':').map(Number);
+        const [hoursB, minutesB, secondsB] = b.arrival_time.split(':').map(Number);
+
+        const dateA = new Date();
+        dateA.setHours(hoursA, minutesA, secondsA || 0);
+
+        const dateB = new Date();
+        dateB.setHours(hoursB, minutesB, secondsB || 0);
+
+        return dateA - dateB;
+      });
+
+      // Log the filtered data
+      console.log("Filtered Stop Times:", sortedData);
+
+      // Store the filtered data in state
+      setStopTimes(sortedData);
+      console.log("Stop Times:", stopTimes);
+      };
+
+      loadData(); 
 
       ReactDOM.render(
         <>
@@ -253,7 +337,12 @@ const MapComponent = () => {
     return { averageRating, updatedWheelchairStatus, shelterAvailability };
   };
 
-  return <div ref={mapContainer} className="map-container" style={{ width: '100%', height: '100vh' }} />;
-};
+  return (
+    <>
+      <div ref={mapContainer} className="map-container" style={{ width: '100%', height: '100vh' }} />
+      <BusList buses={stopTimes} stopName={stopName}/>
+    </>
+  )
+  }
 
 export default MapComponent;

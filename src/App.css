@@ -141,3 +141,79 @@ html, body, #root {
   .mapboxgl-ctrl-bottom-right {
     margin: 20px; /* Optional: Add margin to adjust spacing */
   }
+  /* Dialog styling */
+.bus-list-dialog {
+  position: fixed;
+  top: 100px;
+  left: 5%;
+  width: 300px;
+  background-color: #f0f0f0;
+  padding: 15px;
+  border: 2px solid green;
+  border-radius: 8px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+}
+
+/* Header styling */
+.bus-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bus-list-header h3 {
+  margin: 0;
+  font-size: 1.2em;
+  color: #333;
+}
+
+/* Close button styling */
+.close-button {
+  background: none;
+  border: none;
+  font-size: 1.2em;
+  color: #666;
+  cursor: pointer;
+  padding: 0;
+}
+
+.close-button:hover {
+  color: #333;
+}
+
+/* List styling */
+.bus-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 10px;
+}
+
+.bus-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #ccc;
+  font-size: 0.95em;
+  color: #333;
+}
+
+.bus-list-item:last-child {
+  border-bottom: none;
+}
+
+.bus-list-item-number {
+  font-weight: bold;
+  color: #007bff;
+}
+
+.bus-list-item-time {
+  flex: 1;
+  color: #333;
+}
+
+.bus-list-item-remaining {
+  color: #888;
+  font-style: italic;
+}
