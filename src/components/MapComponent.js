@@ -3,8 +3,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import FeedbackForm from '../FeedbackForm'; // Adjust path as necessary
-import FeedbackList from '../FeedbackList'; // Adjust path as necessary
+import FeedbackForm from '../FeedbackForm';
+import FeedbackList from '../FeedbackList';
+import { db } from '../firebaseConfig';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 // Set Mapbox access token from environment variables
 mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
@@ -13,7 +15,6 @@ const MapComponent = () => {
   const mapContainer = useRef(null); // Reference for map container
   const map = useRef(null); // Reference for Mapbox instance
   const [busStops, setBusStops] = useState(null); // State for bus stops data in GeoJSON format
-  const [busData, setBusData] = useState([]); // State for real-time bus data
 
   // Initialize Mapbox map on component mount
   useEffect(() => {
@@ -43,7 +44,6 @@ const MapComponent = () => {
       geolocate.trigger(); // Requests the user's location
     });
 
-    // Error listener for geolocation issues
     geolocate.on('error', (error) => {
       console.error('Geolocation error:', error);
       alert('Unable to access your location. Please make sure location services are enabled.');
@@ -72,7 +72,10 @@ const MapComponent = () => {
               id: stop_id,
               name: stop_name,
               description: stop_desc || 'No description available',
-              wheelchairAccessible: wheelchair_boarding === '1' ? 'Yes' : 'No'
+              wheelchairAccessible: 
+                wheelchair_boarding === '1' ? 'Yes' :
+                wheelchair_boarding === '0' ? 'No' :
+                'Unknown'
             }
           };
         }).filter(feature => feature !== null);
@@ -90,7 +93,7 @@ const MapComponent = () => {
   useEffect(() => {
     if (!map.current || !busStops) return;
 
-    // Remove source and layers if they exist to avoid duplicates
+    // Remove existing source and layers to avoid duplication
     if (map.current.getSource("busStops")) {
       map.current.removeSource("busStops");
     }
@@ -106,7 +109,7 @@ const MapComponent = () => {
       data: busStops,
       cluster: true,
       clusterMaxZoom: 14,
-      clusterRadius: 50
+      clusterRadius: 50,
     });
 
     // Add cluster and individual point layers for visualization
@@ -116,8 +119,7 @@ const MapComponent = () => {
       source: "busStops",
       filter: ["has", "point_count"],
       paint: {
-        "circle-color": "#00BF63", // New color for bus stops
-
+        "circle-color": "#00BF63",
         "circle-radius": ["step", ["get", "point_count"], 20, 100, 30, 750, 40],
       },
     });
@@ -130,8 +132,6 @@ const MapComponent = () => {
       layout: {
         "text-field": "{point_count_abbreviated}",
         "text-size": 12,
-       "circle-color": "#00BF63", // New color for bus stops
-
       },
     });
 
@@ -141,39 +141,75 @@ const MapComponent = () => {
       source: "busStops",
       filter: ["!", ["has", "point_count"]],
       paint: {
-       "circle-color": "#00BF63", // New color for bus stops
-
+        "circle-color": "#00BF63",
         "circle-radius": 8,
         "circle-stroke-width": 1,
         "circle-stroke-color": "#fff",
       },
     });
 
-    // Display popup with feedback form and feedback list on click of an unclustered point
-    map.current.on("click", "unclustered-point", (e) => {
+    // Display basic popup with "Write a Review" button
+    map.current.on("click", "unclustered-point", async (e) => {
       const coordinates = e.features[0].geometry.coordinates.slice();
       const { id, name, description, wheelchairAccessible } = e.features[0].properties;
 
-      // Create a container for rendering React components into the popup
-      const popupContent = document.createElement("div");
+      // Calculate average rating, wheelchair accessibility, and shelter status
+      const { averageRating, updatedWheelchairStatus, shelterAvailability } = await calculateBusStopFeedbackData(id);
+
+      const initialPopupContent = document.createElement("div");
+
+      ReactDOM.render(
+        <>
+          <h3 style={{ fontSize: '1.4em', fontWeight: 'bold' }}>{name}</h3>
+          <p style={{ fontSize: '1.1em' }}>Description: {description}</p>
+          <p style={{ fontSize: '1.1em' }}>Wheelchair Accessible: {updatedWheelchairStatus}</p>
+          <p style={{ fontSize: '1.1em' }}>Shelter: {shelterAvailability}</p>
+          <p style={{ fontSize: '1.1em' }}>Rating: {averageRating ? `${averageRating.toFixed(1)}/5` : 'No ratings yet'}</p>
+          <button
+            onClick={() => openFeedbackFormPopup(id, name, description, updatedWheelchairStatus, shelterAvailability)}
+            style={{
+              marginTop: '10px',
+              padding: '8px 16px',
+              backgroundColor: '#007bff',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Write a Review
+          </button>
+          <FeedbackList busStopId={id} />
+        </>,
+        initialPopupContent
+      );
 
       new mapboxgl.Popup()
         .setLngLat(coordinates)
-        .setDOMContent(popupContent)
+        .setDOMContent(initialPopupContent)
         .addTo(map.current);
-
-      // Render FeedbackForm and FeedbackList into the popup using ReactDOM
-      ReactDOM.render(
-        <>
-          <h3>{name}</h3>
-          <p>Description: {description}</p>
-          <p>Wheelchair Accessible: {wheelchairAccessible}</p>
-          <FeedbackForm busStopId={id} style={{ resize: 'none', width: '100%' }} />
-          <FeedbackList busStopId={id} />
-        </>,
-        popupContent
-      );
     });
+
+    // Function to open full feedback form in a new popup
+    const openFeedbackFormPopup = (id, name, description, wheelchairAccessible, shelterAvailability) => {
+      const feedbackPopupContent = document.createElement("div");
+
+      ReactDOM.render(
+        <FeedbackForm
+          busStopId={id}
+          busStopName={name}
+          description={description}
+          wheelchairAccessible={wheelchairAccessible}
+          shelterAvailability={shelterAvailability}
+        />,
+        feedbackPopupContent
+      );
+
+      new mapboxgl.Popup()
+        .setLngLat(map.current.getCenter()) // Set popup in the center or adjust as needed
+        .setDOMContent(feedbackPopupContent)
+        .addTo(map.current);
+    };
 
     // Zoom into clusters on click
     map.current.on("click", "clusters", (e) => {
@@ -190,27 +226,34 @@ const MapComponent = () => {
     });
   }, [busStops]);
 
-  // Fetch real-time bus data and refresh every 15 seconds
-  useEffect(() => {
-    const fetchBusData = async () => {
-      try {
-        const response = await fetch('https://nextride.brampton.ca:81/API/VehiclePositions?format=json');
-        const data = await response.json();
-        setBusData(data.entity || []);
-      } catch (error) {
-        console.error('Error fetching bus data:', error);
-      }
-    };
+  // Function to calculate average rating and accessibility information for a bus stop
+  const calculateBusStopFeedbackData = async (busStopId) => {
+    const feedbackQuery = query(
+      collection(db, 'feedbacks'),
+      where('busStopId', '==', busStopId)
+    );
 
-    fetchBusData();
-    const interval = setInterval(fetchBusData, 15000);
+    const querySnapshot = await getDocs(feedbackQuery);
+    const ratings = querySnapshot.docs.map(doc => doc.data().rating);
+    const wheelchairResponses = querySnapshot.docs.map(doc => doc.data().wheelchairAccessibleResponse);
+    const shelterResponses = querySnapshot.docs.map(doc => doc.data().shelterResponse);
 
-    return () => clearInterval(interval);
-  }, []);
+    const averageRating = ratings.length > 0
+      ? ratings.reduce((acc, rating) => acc + rating, 0) / ratings.length
+      : null;
 
-  return (
-    <div ref={mapContainer} className="map-container" style={{ width: '100%', height: '100vh' }} />
-  );
+    const wheelchairYesCount = wheelchairResponses.filter(response => response === true).length;
+    const wheelchairNoCount = wheelchairResponses.filter(response => response === false).length;
+    const updatedWheelchairStatus = wheelchairYesCount > wheelchairNoCount ? 'Yes' : wheelchairNoCount > wheelchairYesCount ? 'No' : 'Info unavailable';
+
+    const shelterYesCount = shelterResponses.filter(response => response === true).length;
+    const shelterNoCount = shelterResponses.filter(response => response === false).length;
+    const shelterAvailability = shelterYesCount > shelterNoCount ? 'Yes' : shelterNoCount > shelterYesCount ? 'No' : 'Info unavailable';
+
+    return { averageRating, updatedWheelchairStatus, shelterAvailability };
+  };
+
+  return <div ref={mapContainer} className="map-container" style={{ width: '100%', height: '100vh' }} />;
 };
 
 export default MapComponent;

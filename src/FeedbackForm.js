@@ -1,17 +1,18 @@
 // FeedbackForm.js
 import React, { useState } from 'react';
-import { db } from './firebaseConfig'; // Adjust path as necessary
+import { db } from './firebaseConfig';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar } from '@fortawesome/free-solid-svg-icons';
 
-const FeedbackForm = ({ busStopId, onClose }) => {
+const FeedbackForm = ({ busStopId, busStopName, description, wheelchairAccessible, shelterAvailability, onClose }) => {
   const [feedback, setFeedback] = useState('');
-  const [rating, setRating] = useState(0); // Rating from 0 to 5 stars
-  const [hoverRating, setHoverRating] = useState(0); // Rating for star hover effect
-  const [isSubmitting, setIsSubmitting] = useState(false); // To track submission status
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [wheelchairAccessibleResponse, setWheelchairAccessibleResponse] = useState(null);
+  const [shelterResponse, setShelterResponse] = useState(null); 
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -23,6 +24,14 @@ const FeedbackForm = ({ busStopId, onClose }) => {
       alert('Please select a rating.');
       return;
     }
+    if (wheelchairAccessibleResponse === null) {
+      alert('Please answer the wheelchair accessibility question.');
+      return;
+    }
+    if (shelterResponse === null) {
+      alert('Please answer the shelter question.');
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -31,12 +40,18 @@ const FeedbackForm = ({ busStopId, onClose }) => {
         busStopId,
         feedback: feedback.trim(),
         rating,
+        wheelchairAccessibleResponse,
+        shelterResponse, 
         timestamp: Timestamp.now(),
       });
+
       setFeedback('');
       setRating(0);
+      setWheelchairAccessibleResponse(null);
+      setShelterResponse(null);
+
       alert('Feedback submitted successfully!');
-      onClose();
+      onClose(); 
     } catch (error) {
       console.error('Error submitting feedback:', error);
       alert('Failed to submit feedback. Please try again later.');
@@ -45,7 +60,6 @@ const FeedbackForm = ({ busStopId, onClose }) => {
     }
   };
 
-  // Render stars with click and hover effects
   const renderStars = () => {
     return Array.from({ length: 5 }, (_, index) => (
       <FontAwesomeIcon
@@ -66,14 +80,85 @@ const FeedbackForm = ({ busStopId, onClose }) => {
 
   return (
     <div style={{ marginBottom: '20px', maxWidth: '400px' }}>
-      <h3>Submit Feedback for Stop ID: {busStopId}</h3>
+      <h3 style={{ fontSize: '1.4em', fontWeight: 'bold', marginBottom: '10px' }}>{busStopName}</h3>
+      <p style={{ fontSize: '1.1em', marginBottom: '5px' }}>Description: {description || 'No description available'}</p>
+      <p style={{ fontSize: '1.1em', marginBottom: '10px' }}>Wheelchair Accessible: {wheelchairAccessible}</p>
+      <p style={{ fontSize: '1.1em', marginBottom: '10px' }}>Shelter: {shelterAvailability}</p>
+
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: '10px' }}>
           <label>Rating:</label>
-          <div style={{ display: 'flex', gap: '5px', marginTop: '5px' }}>
-            {renderStars()}
+          <div style={{ display: 'flex', gap: '5px', marginTop: '5px' }}>{renderStars()}</div>
+        </div>
+
+        <div style={{ marginBottom: '10px' }}>
+          <label>Was it wheelchair accessible?</label>
+          <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
+            <button
+              type="button"
+              onClick={() => setWheelchairAccessibleResponse(true)}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: wheelchairAccessibleResponse === true ? '#007bff' : '#ccc',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              Yes
+            </button>
+            <button
+              type="button"
+              onClick={() => setWheelchairAccessibleResponse(false)}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: wheelchairAccessibleResponse === false ? '#007bff' : '#ccc',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              No
+            </button>
           </div>
         </div>
+
+        <div style={{ marginBottom: '10px' }}>
+          <label>Does the bus stop have shelter?</label>
+          <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
+            <button
+              type="button"
+              onClick={() => setShelterResponse(true)}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: shelterResponse === true ? '#007bff' : '#ccc',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              Yes
+            </button>
+            <button
+              type="button"
+              onClick={() => setShelterResponse(false)}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: shelterResponse === false ? '#007bff' : '#ccc',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              No
+            </button>
+          </div>
+        </div>
+
         <div style={{ marginBottom: '10px' }}>
           <label>
             Feedback:
@@ -88,12 +173,12 @@ const FeedbackForm = ({ busStopId, onClose }) => {
                 border: '1px solid #ccc',
                 borderRadius: '4px',
                 resize: 'none',
-                fontFamily: 'Arial, sans-serif',
               }}
               disabled={isSubmitting}
             />
           </label>
         </div>
+
         <button
           type="submit"
           disabled={isSubmitting}
@@ -104,7 +189,6 @@ const FeedbackForm = ({ busStopId, onClose }) => {
             border: 'none',
             borderRadius: '4px',
             cursor: isSubmitting ? 'not-allowed' : 'pointer',
-            transition: 'background-color 0.3s',
           }}
         >
           {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
