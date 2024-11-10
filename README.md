@@ -1,44 +1,56 @@
-Commute Companion
-Overview
-Commute Companion is an innovative app built for transit users to enhance their commuting experience by providing real-time bus information, interactive features, and a discussion panel for each bus stop. The app features functionalities such as rating bus stops, adding feedback, and viewing relevant comments from other users. It also includes a map with interactive bus stop markers, providing commuters with vital information on bus accessibility, shelter availability, and more.
+# Commute Companion
 
-This project was developed as part of BramHack with the goal of improving the overall transit experience.
+## Overview
 
-Features
-Interactive Map: Displays bus stops on a Mapbox map with clustering functionality for better visibility of nearby stops.
-Bus Stop Details: Displays essential information about each bus stop, including accessibility features, shelter availability, and user ratings.
-Rating System: Users can rate bus stops based on their experiences, including their accessibility and shelter.
-Feedback and Comments: Allows users to submit and view feedback for each bus stop. Comments can be posted and reviewed.
-Discussion Panel: Automatically opens a discussion panel for each bus stop where users can view and add comments.
-Real-Time Data: Fetches and displays real-time bus positions (vehicle data) for the Brampton Transit system.
+**Commute Companion** is an innovative app built for transit users to enhance their commuting experience by providing real-time bus information, interactive features, and a discussion panel for each bus stop. The app features functionalities such as rating bus stops, adding feedback, and viewing relevant comments from other users. It also includes a map with interactive bus stop markers, providing commuters with vital information on bus accessibility, shelter availability, and more.
 
-Technologies Used
-React.js: Frontend framework for building the UI.
-Mapbox GL JS: Library for displaying interactive maps.
-Firebase: Backend service for real-time data storage, user authentication, and handling feedback/comments.
-GTFS: Used to fetch and parse bus stop data for transit routes.
-Firebase Firestore: Database used to store comments and feedback for each bus stop.
+This project was developed as part of **BramHack** with the goal of improving the overall transit experience.
 
-Screenshots
+## Features
+
+- **Interactive Map**: Displays bus stops on a Mapbox map with clustering functionality for better visibility of nearby stops.
+- **Bus Stop Details**: Displays essential information about each bus stop, including accessibility features, shelter availability, and user ratings.
+- **Rating System**: Users can rate bus stops based on their experiences, including their accessibility and shelter.
+- **Feedback and Comments**: Allows users to submit and view feedback for each bus stop. Comments can be posted and reviewed.
+
+## Technologies Used
+
+- **React.js**: Frontend framework for building the UI.
+- **Mapbox GL JS**: Library for displaying interactive maps.
+- **Firebase**: Backend service for real-time data storage, user authentication, and handling feedback/comments.
+- **GTFS**: Used to fetch and parse bus stop data for transit routes.
+- **Firebase Firestore**: Database used to store comments and feedback for each bus stop.
+
+## Screenshots
+
+### Display of BusStips in Clusters
+![image](https://github.com/user-attachments/assets/461de376-6afd-40bb-acc7-edb3978fdc9f)
+
+### Display of Interactive Bus Stops on the Map
+![image](https://github.com/user-attachments/assets/cef78999-d1d7-483e-a10a-547ba4db5ede)
+
+### Display fo Review System
+![image](https://github.com/user-attachments/assets/9cb261dd-a7b4-47f6-8d66-b28631337ff7)
 
 
-Example:
+## Installation and Setup
 
+To run the **Commute Companion** app locally, follow these steps:
 
-Description: Display of interactive bus stops on the map.
+### Prerequisites
 
-Installation and Setup
-To run the Commute Companion app locally, follow these steps:
+- **Node.js** (v14 or later)
+- **npm** (comes with Node.js)
 
-Prerequisites
-Node.js (v14 or later)
-npm (comes with Node.js)
-1. Clone the Repository
-bash
-Copy code
-git clone https://github.com/yourusername/commute-companion.git
-cd commute-companion
-2. Install Dependencies
+### Steps
+
+1. **Clone the Repository**
+   ```bash
+   git clone https://github.com/Uniquelimbu/commute-companion.git
+   cd commute-companion
+
+2. **Install Dependencies**
+
 Install all the necessary dependencies with npm:
 
 npm install
@@ -68,17 +80,18 @@ Now that everything is set up, start the React development server:
 npm start
 The app should now be running at http://localhost:3000.
 
-Functionality Walkthrough
-1. Interactive Map
-The map component uses Mapbox GL JS to show bus stops and clusters them for better performance. When a user clicks on a bus stop marker, the app shows detailed information about that stop, including accessibility features and real-time rating data.
+## Functionality Walkthrough
 
-2. Rating and Feedback System
-Users can submit a rating (from 1 to 5 stars) for each bus stop. They can also write feedback about their experience with the stop, including features like wheelchair accessibility and shelter availability.
+1. **Interactive Map**
+   - The map component uses **Mapbox GL JS** to show bus stops and clusters them for better performance. When a user clicks on a bus stop marker, the app shows detailed information about that stop, including accessibility features and real-time rating data.
 
-3. Discussion Panel
-For each bus stop, a discussion panel automatically opens on the left side of the screen. Users can view comments left by others and add their own comments about that bus stop.
+2. **Rating and Feedback System**
+   - Users can submit a rating (from 1 to 5 stars) for each bus stop. They can also write feedback about their experience with the stop, including features like wheelchair accessibility and shelter availability. This system allows the community to share their experiences and help others make better decisions about their commute.
 
-Contributions
+3. **User Login**
+   - **Google Authentication** is integrated into the app to allow users to log in using their Google accounts. This feature helps store and manage user-specific data like their feedback and ratings for bus stops.
+
+## Contributions
 If you'd like to contribute to this project, please fork the repository, create a new branch, and submit a pull request.
 
 To contribute:
@@ -88,20 +101,25 @@ Commit your changes: git commit -am 'Add new feature'
 Push to the branch: git push origin feature-name
 Create a new Pull Request
 
-License
-This project is licensed under the MIT License - see the LICENSE file for details.
+## License
 
-Acknowledgments
-Mapbox for their interactive map services.
-Firebase for providing authentication and database services.
-Brampton Transit for providing real-time data on bus positions.
-Hackathon Team for collaborative efforts during the project development.
+This project is licensed under the **MIT License** - see the [LICENSE](./LICENSE) file for details.
 
-Future Plans
-Add more transit data: Incorporate more cities and transit agencies.
-Enhance User Interaction: Introduce features like saving favorite bus stops, tracking historical data, and more.
-Mobile App Version: Consider building a mobile version using React Native for iOS/Android users.# Commute-Companion
- 
+## Acknowledgments
+
+- **Mapbox** for their interactive map services and reliable geolocation APIs.
+- **Firebase** for providing seamless authentication and real-time database services to store and retrieve user data.
+- **Brampton Transit** for providing real-time data on bus positions, which forms a key part of the app.
+- **Hackathon Team** for their collaborative efforts during the project development.
+
+## Future Plans
+
+- **Add more transit data**: Incorporate more cities and transit agencies to expand the app's coverage.
+- **Discussion Panel**: Automatically open a discussion panel for each bus stop where users can view and add comments. This will help increase user engagement.
+- **Enhance User Interaction**: Introduce features like saving favorite bus stops, tracking historical data, and providing more personalized notifications.
+- **Mobile App Version**: Consider building a mobile version using **React Native** for iOS/Android users to make the app accessible on mobile devices, providing users with a more native experience.
+- **Push Notifications**: Add push notifications for real-time bus tracking and updates.
+- **User Profile**: Allow users to create profiles and track their ratings and comments across different bus stops.
 
 
 
