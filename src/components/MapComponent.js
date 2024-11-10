@@ -27,7 +27,7 @@ const MapComponent = () => {
     });
 
     // Add zoom and rotation controls to the map
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    map.current.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
 
     // Add geolocation control to the map
     const geolocate = new mapboxgl.GeolocateControl({
@@ -36,7 +36,7 @@ const MapComponent = () => {
       showAccuracyCircle: true,
     });
 
-    map.current.addControl(geolocate, 'top-right');
+    map.current.addControl(geolocate, 'bottom-right');
 
     // Automatically trigger geolocation when the map is loaded
     map.current.on('load', () => {

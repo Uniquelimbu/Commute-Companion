@@ -57,8 +57,8 @@ const FeedbackForm = ({ busStopId, onClose }) => {
         style={{
           cursor: 'pointer',
           color: index < (hoverRating || rating) ? '#FFD700' : '#ccc',
-          fontSize: '1.8em', // Slightly increased size for visibility
-          transition: 'color 0.2s', // Smooth transition for hover
+          fontSize: '1.8em',
+          transition: 'color 0.2s',
         }}
       />
     ));
@@ -87,8 +87,8 @@ const FeedbackForm = ({ busStopId, onClose }) => {
                 padding: '8px',
                 border: '1px solid #ccc',
                 borderRadius: '4px',
-                resize: 'none', // Prevent resizing
-                fontFamily: 'Arial, sans-serif', // Improved font readability
+                resize: 'none',
+                fontFamily: 'Arial, sans-serif',
               }}
               disabled={isSubmitting}
             />
@@ -104,7 +104,7 @@ const FeedbackForm = ({ busStopId, onClose }) => {
             border: 'none',
             borderRadius: '4px',
             cursor: isSubmitting ? 'not-allowed' : 'pointer',
-            transition: 'background-color 0.3s', // Smooth transition for button color
+            transition: 'background-color 0.3s',
           }}
         >
           {isSubmitting ? 'Submitting...' : 'Submit Feedback'}

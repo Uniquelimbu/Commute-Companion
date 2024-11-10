@@ -1,46 +1,143 @@
-/* App.css */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap');
 
-/* Remove margins and padding from the root element to make it full screen */
+
+/* Reset and Fullscreen Layout */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-  
-  /* Set the html and body to be 100% of the viewport height */
-  html, body, #root {
-    height: 100%;
-    width: 100%;
-    overflow: hidden;
-  }
-  
-  /* Ensure the map component fills the full screen */
-  .App {
-    height: 100vh;
-    width: 100vw;
-  }
-  
-  .mapboxgl-user-location-dot-accuracy {
-    display: none !important;
-  }
-  .mapboxgl-user-location-accuracy-circle {
-    display: none;
-  }
-  
-  
-  .map-container {
-    height: 100%;
-    width: 100%;
-  }
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-  /* Logo styling */
+html, body, #root {
+  padding-top: 0px;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.App {
+  height: 100vh;
+  width: 100vw;
+  position: relative;
+}
+
+/* Map Container */
+.map-container {
+  
+  height: 100%;
+  width: 100%;
+}
+
+/* Remove Geolocation Accuracy Circle */
+.mapboxgl-user-location-dot-accuracy,
+.mapboxgl-user-location-accuracy-circle {
+  display: none !important;
+}
+
+/* Logo Styling */
 .logo {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    width: 120px; /* Adjust width as needed */
-    height: auto;
-    z-index: 1000; /* Ensure it appears above other elements */
+  position: absolute;
+  top: 5px;
+  left: 10px;
+  width: 60px;
+  height: auto;
+  z-index: 1000;
+  cursor: pointer;
+}
+.logo-container {
+  display: flex;
+  align-items: center;
+}
+
+.app-name {
+  
+    font-family: 'Roboto', sans-serif; /* Use your chosen font */
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+    margin-left: 60px;
+}
+
+  
+
+
+/* Header Styling */
+.header {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 20px;
+  background-color: rgba(248, 249, 250, 0.9);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1001;
+}
+
+/* Authentication Container Positioned to Right */
+.auth-container {
+  display: flex;
+  align-items: center;
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Button Styling for Sign-In/Sign-Out */
+.auth-button {
+  padding: 10px 18px;
+  
+  right: 20px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.3s ease;
+}
+
+.auth-button:hover {
+  background-color: #0056b3;
+}
+
+/* User Info Styling */
+.user-info {
+  display: flex;
+  align-items: center;
+  padding: 0px 20px;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+}
+
+.welcome-text {
+  margin-right: 10px; /* Adjust spacing between username and button */
+  font-size: 1rem;
+  font-family: 'Roboto', sans-serif; /* Use the same or a different font */
+  margin-right: 10px;
+}
+
+.auth-button {
+  padding: 5px 10px;
+}
+
+.mapboxgl-ctrl-group {
+    transform: scale(1.5); /* Increase size */
   }
   
-  
+  .mapboxgl-ctrl-bottom-right {
+    margin: 20px; /* Optional: Add margin to adjust spacing */
+  }

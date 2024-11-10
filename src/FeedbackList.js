@@ -1,6 +1,6 @@
 // FeedbackList.js
 import React, { useEffect, useState } from 'react';
-import { db } from './firebaseConfig'; // Adjust path if necessary
+import { db } from './firebaseConfig';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 
 const FeedbackList = ({ busStopId }) => {
