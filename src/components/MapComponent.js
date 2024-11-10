@@ -252,7 +252,7 @@ const MapComponent = () => {
         .filter((s) => s.shape_id == trip.shape_id)
         .sort((a, b) => a.shape_pt_sequence - b.shape_pt_sequence)
         .map((point) => [parseFloat(point.shape_pt_lon), parseFloat(point.shape_pt_lat)]);
-      console.log(shapePoints)
+      // console.log(shapePoints)
       setRoutePath({
         type: 'Feature',
         geometry: {
@@ -265,32 +265,30 @@ const MapComponent = () => {
   loadAndSetRoutePath();
 
    useEffect(() => {
-    if (map.current && routePath) {
-      // Ensure any existing source and layer are removed before adding new ones
-      if (map.current.getSource('routePath')) {
-        map.current.removeSource('routePath');
-      }
-      if (map.current.getLayer('routeLayer')) {
-        map.current.removeLayer('routeLayer');
-      }
+    if(!routePath)
+      return;
+    map.current.on('load', () => {
+      // Add layers or sources here, after the map style is fully loaded
+      if (map.current && routePath) {
 
-      // Add the route as a source
-      map.current.addSource('routePath', {
-        type: 'geojson',
-        data: routePath
-      });
-
-      // Add a line layer to represent the route
-      map.current.addLayer({
-        id: 'routeLayer',
-        type: 'line',
-        source: 'routePath',
-        paint: {
-          'line-color': '#FF0000', // Set line color
-          'line-width': 4          // Set line width
-        }
-      });
-    }
+        // Add the route as a source
+        map.current.addSource('routePath', {
+          type: 'geojson',
+          data: routePath
+        });
+        console.log("reached")
+        // Add a line layer to represent the route
+        map.current.addLayer({
+          id: 'routeLayer',
+          type: 'line',
+          source: 'routePath',
+          paint: {
+            'line-color': '#FF0000', // Set line color
+            'line-width': 4          // Set line width
+          }
+        });
+      }
+    }); 
   }, [routePath]);
   return (
     <div ref={mapContainer} className="map-container" style={{ width: '100%', height: '100vh' }} />
