@@ -10,11 +10,10 @@ import FeedbackList from '../FeedbackList'; // Adjust path as necessary
 mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
 
 const MapComponent = () => {
-  const mapContainer = useRef(null);    // Reference for map container
-  const map = useRef(null);             // Reference for Mapbox instance
-  const [busData, setBusData] = useState([]);      // State for real-time bus data
-  const [busStops, setBusStops] = useState(null);  // State for bus stops data in GeoJSON format
-  const busMarkersRef = useRef([]);     // Array to store bus markers for cleanup
+  const mapContainer = useRef(null); // Reference for map container
+  const map = useRef(null); // Reference for Mapbox instance
+  const [busStops, setBusStops] = useState(null); // State for bus stops data in GeoJSON format
+  const [busData, setBusData] = useState([]); // State for real-time bus data
 
   // Initialize Mapbox map on component mount
   useEffect(() => {
@@ -29,6 +28,26 @@ const MapComponent = () => {
 
     // Add zoom and rotation controls to the map
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+    // Add geolocation control to the map
+    const geolocate = new mapboxgl.GeolocateControl({
+      positionOptions: { enableHighAccuracy: true },
+      trackUserLocation: true,
+      showAccuracyCircle: true,
+    });
+
+    map.current.addControl(geolocate, 'top-right');
+
+    // Automatically trigger geolocation when the map is loaded
+    map.current.on('load', () => {
+      geolocate.trigger(); // Requests the user's location
+    });
+
+    // Error listener for geolocation issues
+    geolocate.on('error', (error) => {
+      console.error('Geolocation error:', error);
+      alert('Unable to access your location. Please make sure location services are enabled.');
+    });
   }, []);
 
   // Fetch and parse bus stop data from GTFS
@@ -38,14 +57,13 @@ const MapComponent = () => {
         const response = await fetch('/gtfs_data/stops.txt');
         const text = await response.text();
 
-        // Parse stops.txt and convert to GeoJSON format
         const rows = text.split('\n').slice(1).filter(row => row);
         const features = rows.map(row => {
           const [stop_id, , stop_name, stop_desc, stop_lat, stop_lon, , , , , , wheelchair_boarding] = row.split(',');
 
           const lat = parseFloat(stop_lat);
           const lon = parseFloat(stop_lon);
-          if (isNaN(lat) || isNaN(lon)) return null; // Skip invalid entries
+          if (isNaN(lat) || isNaN(lon)) return null;
 
           return {
             type: "Feature",
@@ -57,7 +75,7 @@ const MapComponent = () => {
               wheelchairAccessible: wheelchair_boarding === '1' ? 'Yes' : 'No'
             }
           };
-        }).filter(feature => feature !== null); // Filter out invalid features
+        }).filter(feature => feature !== null);
 
         setBusStops({ type: "FeatureCollection", features });
       } catch (error) {
@@ -98,7 +116,8 @@ const MapComponent = () => {
       source: "busStops",
       filter: ["has", "point_count"],
       paint: {
-        "circle-color": "#51bbd6",
+        "circle-color": "#00BF63", // New color for bus stops
+
         "circle-radius": ["step", ["get", "point_count"], 20, 100, 30, 750, 40],
       },
     });
@@ -111,6 +130,8 @@ const MapComponent = () => {
       layout: {
         "text-field": "{point_count_abbreviated}",
         "text-size": 12,
+       "circle-color": "#00BF63", // New color for bus stops
+
       },
     });
 
@@ -120,7 +141,8 @@ const MapComponent = () => {
       source: "busStops",
       filter: ["!", ["has", "point_count"]],
       paint: {
-        "circle-color": "#11b4da",
+       "circle-color": "#00BF63", // New color for bus stops
+
         "circle-radius": 8,
         "circle-stroke-width": 1,
         "circle-stroke-color": "#fff",
@@ -186,34 +208,8 @@ const MapComponent = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Add markers for real-time bus data
-  useEffect(() => {
-    if (!map.current || busData.length === 0) return;
-
-    // Clear previous markers
-    busMarkersRef.current.forEach(marker => marker.remove());
-    busMarkersRef.current = [];
-
-    busData.forEach((bus) => {
-      const latitude = bus.vehicle?.position?.latitude;
-      const longitude = bus.vehicle?.position?.longitude;
-
-      if (latitude && longitude) {
-        const marker = new mapboxgl.Marker({ color: 'blue' })
-          .setLngLat([longitude, latitude])
-          .setPopup(new mapboxgl.Popup().setHTML(`<p>Bus ID: ${bus.id}</p>`))
-          .addTo(map.current);
-
-        busMarkersRef.current.push(marker);
-      }
-    });
-
-    return () => busMarkersRef.current.forEach(marker => marker.remove());
-  }, [busData]);
-
-  
   return (
-    <div ref={mapContainer} className="map-container" />
+    <div ref={mapContainer} className="map-container" style={{ width: '100%', height: '100vh' }} />
   );
 };
 

@@ -20,6 +20,14 @@
     width: 100vw;
   }
   
+  .mapboxgl-user-location-dot-accuracy {
+    display: none !important;
+  }
+  .mapboxgl-user-location-accuracy-circle {
+    display: none;
+  }
+  
+  
   .map-container {
     height: 100%;
     width: 100%;
