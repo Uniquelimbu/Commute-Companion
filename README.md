@@ -119,7 +119,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](./LICENSE
 - **Enhance User Interaction**: Introduce features like saving favorite bus stops, tracking historical data, and providing more personalized notifications.
 - **Mobile App Version**: Consider building a mobile version using **React Native** for iOS/Android users to make the app accessible on mobile devices, providing users with a more native experience.
 - **Push Notifications**: Add push notifications for real-time bus tracking and updates.
-- **User Profile**: Allow users to create profiles and track their ratings and comments across different bus stops.
+- **User Profile**: Allow users to create profiles and track their ratings and comments across various bus stops.
 
 
 
